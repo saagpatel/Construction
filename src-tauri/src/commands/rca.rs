@@ -70,8 +70,7 @@ pub fn list_five_whys_steps(
     rca_session_id: i64,
 ) -> Result<Vec<FiveWhysStep>, AppError> {
     let conn = db.lock().map_err(|e| AppError::Internal(e.to_string()))?;
-    rca::list_five_whys_steps(&conn, rca_session_id)
-        .map_err(|e| AppError::Internal(e.to_string()))
+    rca::list_five_whys_steps(&conn, rca_session_id).map_err(|e| AppError::Internal(e.to_string()))
 }
 
 #[tauri::command]
@@ -151,8 +150,7 @@ pub fn list_corrective_actions(
     incident_id: i64,
 ) -> Result<Vec<CorrectiveAction>, AppError> {
     let conn = db.lock().map_err(|e| AppError::Internal(e.to_string()))?;
-    rca::list_corrective_actions(&conn, incident_id)
-        .map_err(|e| AppError::Internal(e.to_string()))
+    rca::list_corrective_actions(&conn, incident_id).map_err(|e| AppError::Internal(e.to_string()))
 }
 
 #[tauri::command]

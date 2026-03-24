@@ -81,6 +81,8 @@ pub fn run() {
             commands::osha::get_osha_300a_summary,
             commands::osha::get_osha_301_report,
             commands::osha::export_osha_300_csv,
+            commands::osha::export_osha_300a_csv,
+            commands::osha::export_osha_301_csv,
             commands::osha::upsert_annual_stats,
             commands::osha::get_annual_stats,
             // Dashboard

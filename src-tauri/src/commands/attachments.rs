@@ -1,9 +1,9 @@
 use crate::db::incidents::{self, Attachment};
 use crate::errors::AppError;
 use rusqlite::Connection;
-use std::sync::Mutex;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::Mutex;
 use tauri::{AppHandle, Manager, State};
 
 type DbState = Mutex<Connection>;
@@ -18,8 +18,15 @@ pub fn add_attachment(
     file_size: Option<i64>,
 ) -> Result<Attachment, AppError> {
     let conn = db.lock().map_err(|e| AppError::Internal(e.to_string()))?;
-    incidents::add_attachment(&conn, incident_id, &file_name, &file_path, &file_type, file_size)
-        .map_err(|e| AppError::Internal(e.to_string()))
+    incidents::add_attachment(
+        &conn,
+        incident_id,
+        &file_name,
+        &file_path,
+        &file_type,
+        file_size,
+    )
+    .map_err(|e| AppError::Internal(e.to_string()))
 }
 
 #[tauri::command]
@@ -48,7 +55,7 @@ pub async fn upload_attachment(
     use crate::validation;
 
     // Validate file type
-    let allowed_types = vec!["photo", "audio", "document"];
+    let allowed_types = ["photo", "audio", "document"];
     if !allowed_types.contains(&file_type.as_str()) {
         return Err(AppError::Validation(format!(
             "Invalid file type: {}. Must be one of: photo, audio, document",
@@ -92,8 +99,9 @@ pub async fn upload_attachment(
         .app_data_dir()
         .map_err(|e| AppError::Internal(format!("Failed to get app data dir: {}", e)))?;
     let attachments_dir = app_data_dir.join("attachments");
-    fs::create_dir_all(&attachments_dir)
-        .map_err(|e| AppError::Internal(format!("Failed to create attachments directory: {}", e)))?;
+    fs::create_dir_all(&attachments_dir).map_err(|e| {
+        AppError::Internal(format!("Failed to create attachments directory: {}", e))
+    })?;
 
     // Generate unique filename with incident ID
     let unique_filename = format!("{}_{}", incident_id, safe_filename);

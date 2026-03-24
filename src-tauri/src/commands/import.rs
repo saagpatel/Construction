@@ -73,6 +73,8 @@ pub fn import_csv(
     location_id: Option<i64>,
     mapping: ColumnMapping,
 ) -> Result<ImportResult, AppError> {
+    use crate::validation;
+
     let conn = db.lock().map_err(|e| AppError::Internal(e.to_string()))?;
 
     let mut rdr = csv::Reader::from_path(&file_path)
@@ -128,7 +130,84 @@ pub fn import_csv(
             }
         };
 
-        let description = get_field(&mapping.description).unwrap_or_else(|| "Imported incident".to_string());
+        let description =
+            get_field(&mapping.description).unwrap_or_else(|| "Imported incident".to_string());
+
+        if let Err(e) = validation::validate_date_format(&incident_date, "Incident date") {
+            errors.push(format!("Row {}: {e}", row_num + 2));
+            continue;
+        }
+
+        if let Err(e) = validation::validate_not_empty(&employee_name, "Employee name") {
+            errors.push(format!("Row {}: {e}", row_num + 2));
+            continue;
+        }
+
+        if let Err(e) = validation::validate_string_length(
+            &employee_name,
+            validation::MAX_NAME_LENGTH,
+            "Employee name",
+        ) {
+            errors.push(format!("Row {}: {e}", row_num + 2));
+            continue;
+        }
+
+        if let Err(e) = validation::validate_not_empty(&description, "Description") {
+            errors.push(format!("Row {}: {e}", row_num + 2));
+            continue;
+        }
+
+        if let Err(e) = validation::validate_string_length(
+            &description,
+            validation::MAX_DESCRIPTION_LENGTH,
+            "Description",
+        ) {
+            errors.push(format!("Row {}: {e}", row_num + 2));
+            continue;
+        }
+
+        let days_away_count = match get_field(&mapping.days_away_count) {
+            Some(value) => match value.parse::<i64>() {
+                Ok(days) => {
+                    if let Err(e) = validation::validate_days_count(days, "Days away from work") {
+                        errors.push(format!("Row {}: {e}", row_num + 2));
+                        continue;
+                    }
+                    Some(days)
+                }
+                Err(_) => {
+                    errors.push(format!(
+                        "Row {}: Invalid days away count '{}' (expected whole number)",
+                        row_num + 2,
+                        value
+                    ));
+                    continue;
+                }
+            },
+            None => None,
+        };
+
+        let days_restricted_count = match get_field(&mapping.days_restricted_count) {
+            Some(value) => match value.parse::<i64>() {
+                Ok(days) => {
+                    if let Err(e) = validation::validate_days_count(days, "Days of restricted work")
+                    {
+                        errors.push(format!("Row {}: {e}", row_num + 2));
+                        continue;
+                    }
+                    Some(days)
+                }
+                Err(_) => {
+                    errors.push(format!(
+                        "Row {}: Invalid restricted days count '{}' (expected whole number)",
+                        row_num + 2,
+                        value
+                    ));
+                    continue;
+                }
+            },
+            None => None,
+        };
 
         let data = CreateIncident {
             establishment_id,
@@ -139,10 +218,8 @@ pub fn import_csv(
             description,
             where_occurred: get_field(&mapping.where_occurred),
             outcome_severity: get_field(&mapping.outcome_severity),
-            days_away_count: get_field(&mapping.days_away_count)
-                .and_then(|s| s.parse().ok()),
-            days_restricted_count: get_field(&mapping.days_restricted_count)
-                .and_then(|s| s.parse().ok()),
+            days_away_count,
+            days_restricted_count,
             injury_illness_type: get_field(&mapping.injury_illness_type),
             employee_gender: get_field(&mapping.employee_gender),
             employee_address: None,

@@ -160,6 +160,18 @@ fn next_case_number(conn: &Connection, establishment_id: i64, year: &str) -> Res
     Ok(max.unwrap_or(0) + 1)
 }
 
+fn extract_incident_year(incident_date: &str) -> Result<&str> {
+    let year = incident_date
+        .get(0..4)
+        .context("Incident date must start with a 4-digit year")?;
+
+    if !year.chars().all(|c| c.is_ascii_digit()) {
+        anyhow::bail!("Incident date must start with a numeric year: {incident_date}");
+    }
+
+    Ok(year)
+}
+
 fn row_to_incident(row: &rusqlite::Row<'_>) -> rusqlite::Result<Incident> {
     Ok(Incident {
         id: row.get(0)?,
@@ -221,28 +233,26 @@ const SELECT_COLS: &str = "id, case_number, establishment_id, location_id,
     created_at, updated_at";
 
 pub fn create_incident(conn: &Connection, data: CreateIncident) -> Result<Incident> {
-    let year = &data.incident_date[..4];
+    let year = extract_incident_year(&data.incident_date)?;
     let case_num = next_case_number(conn, data.establishment_id, year)?;
 
     conn.execute(
-        &format!(
-            "INSERT INTO incidents (
-                case_number, establishment_id, location_id,
-                employee_name, employee_job_title, employee_address, employee_city,
-                employee_state, employee_zip, employee_dob, employee_hire_date,
-                employee_gender, is_privacy_case,
-                incident_date, incident_time, work_start_time, where_occurred, description,
-                activity_before_incident, how_injury_occurred, injury_description, object_substance,
-                physician_name, treatment_facility, facility_address, facility_city_state_zip,
-                treated_in_er, hospitalized_overnight,
-                outcome_severity, days_away_count, days_restricted_count, date_of_death,
-                injury_illness_type, is_recordable
-            ) VALUES (
-                ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13,
-                ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26,
-                ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34
-            )"
-        ),
+        "INSERT INTO incidents (
+            case_number, establishment_id, location_id,
+            employee_name, employee_job_title, employee_address, employee_city,
+            employee_state, employee_zip, employee_dob, employee_hire_date,
+            employee_gender, is_privacy_case,
+            incident_date, incident_time, work_start_time, where_occurred, description,
+            activity_before_incident, how_injury_occurred, injury_description, object_substance,
+            physician_name, treatment_facility, facility_address, facility_city_state_zip,
+            treated_in_er, hospitalized_overnight,
+            outcome_severity, days_away_count, days_restricted_count, date_of_death,
+            injury_illness_type, is_recordable
+        ) VALUES (
+            ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13,
+            ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26,
+            ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34
+        )",
         params![
             case_num,
             data.establishment_id,
@@ -272,7 +282,9 @@ pub fn create_incident(conn: &Connection, data: CreateIncident) -> Result<Incide
             data.facility_city_state_zip,
             data.treated_in_er.map(|v| v as i32),
             data.hospitalized_overnight.map(|v| v as i32),
-            data.outcome_severity.as_deref().unwrap_or("other_recordable"),
+            data.outcome_severity
+                .as_deref()
+                .unwrap_or("other_recordable"),
             data.days_away_count.unwrap_or(0),
             data.days_restricted_count.unwrap_or(0),
             data.date_of_death,
@@ -302,8 +314,7 @@ pub fn get_incident(conn: &Connection, id: i64) -> Result<Incident> {
 
 pub fn list_incidents(conn: &Connection, filter: IncidentFilter) -> Result<Vec<Incident>> {
     let mut sql = format!("SELECT {SELECT_COLS} FROM incidents WHERE establishment_id = ?");
-    let mut values: Vec<Box<dyn rusqlite::types::ToSql>> =
-        vec![Box::new(filter.establishment_id)];
+    let mut values: Vec<Box<dyn rusqlite::types::ToSql>> = vec![Box::new(filter.establishment_id)];
 
     if let Some(ref loc_id) = filter.location_id {
         sql.push_str(" AND location_id = ?");
@@ -393,21 +404,51 @@ pub fn update_incident(conn: &Connection, id: i64, data: UpdateIncident) -> Resu
     push_field!(sets, values, data.work_start_time, "work_start_time");
     push_field!(sets, values, data.where_occurred, "where_occurred");
     push_field!(sets, values, data.description, "description");
-    push_field!(sets, values, data.activity_before_incident, "activity_before_incident");
-    push_field!(sets, values, data.how_injury_occurred, "how_injury_occurred");
+    push_field!(
+        sets,
+        values,
+        data.activity_before_incident,
+        "activity_before_incident"
+    );
+    push_field!(
+        sets,
+        values,
+        data.how_injury_occurred,
+        "how_injury_occurred"
+    );
     push_field!(sets, values, data.injury_description, "injury_description");
     push_field!(sets, values, data.object_substance, "object_substance");
     push_field!(sets, values, data.physician_name, "physician_name");
     push_field!(sets, values, data.treatment_facility, "treatment_facility");
     push_field!(sets, values, data.facility_address, "facility_address");
-    push_field!(sets, values, data.facility_city_state_zip, "facility_city_state_zip");
+    push_field!(
+        sets,
+        values,
+        data.facility_city_state_zip,
+        "facility_city_state_zip"
+    );
     push_bool_field!(sets, values, data.treated_in_er, "treated_in_er");
-    push_bool_field!(sets, values, data.hospitalized_overnight, "hospitalized_overnight");
+    push_bool_field!(
+        sets,
+        values,
+        data.hospitalized_overnight,
+        "hospitalized_overnight"
+    );
     push_field!(sets, values, data.outcome_severity, "outcome_severity");
     push_i64_field!(sets, values, data.days_away_count, "days_away_count");
-    push_i64_field!(sets, values, data.days_restricted_count, "days_restricted_count");
+    push_i64_field!(
+        sets,
+        values,
+        data.days_restricted_count,
+        "days_restricted_count"
+    );
     push_field!(sets, values, data.date_of_death, "date_of_death");
-    push_field!(sets, values, data.injury_illness_type, "injury_illness_type");
+    push_field!(
+        sets,
+        values,
+        data.injury_illness_type,
+        "injury_illness_type"
+    );
     push_bool_field!(sets, values, data.is_recordable, "is_recordable");
     push_field!(sets, values, data.status, "status");
     push_field!(sets, values, data.completed_by, "completed_by");
@@ -483,7 +524,7 @@ pub fn add_attachment(
             })
         },
     )
-    .map_err(|e| anyhow::Error::new(e))
+    .map_err(anyhow::Error::new)
 }
 
 pub fn list_attachments(conn: &Connection, incident_id: i64) -> Result<Vec<Attachment>> {
@@ -523,8 +564,10 @@ pub fn delete_attachment(conn: &Connection, id: i64) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db::locations::{
+        create_establishment, create_location, CreateEstablishment, CreateLocation,
+    };
     use crate::db::open_test_db;
-    use crate::db::locations::{CreateEstablishment, CreateLocation, create_establishment, create_location};
 
     fn setup_test_data(conn: &Connection) -> (i64, i64) {
         let est = create_establishment(
@@ -696,5 +739,17 @@ mod tests {
         )
         .unwrap();
         assert_eq!(filtered.len(), 0);
+    }
+
+    #[test]
+    fn test_create_incident_rejects_invalid_date_prefix() {
+        let conn = open_test_db();
+        let (est_id, loc_id) = setup_test_data(&conn);
+
+        let mut incident = make_incident(est_id, loc_id);
+        incident.incident_date = "bad-date".to_string();
+
+        let result = create_incident(&conn, incident);
+        assert!(result.is_err());
     }
 }

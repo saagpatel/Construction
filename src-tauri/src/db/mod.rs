@@ -10,10 +10,7 @@ use rusqlite::Connection;
 use std::path::Path;
 
 const MIGRATION_FILES: &[(&str, &str)] = &[
-    (
-        "001_initial",
-        include_str!("migrations/001_initial.sql"),
-    ),
+    ("001_initial", include_str!("migrations/001_initial.sql")),
     (
         "002_toolbox_talks",
         include_str!("migrations/002_toolbox_talks.sql"),
@@ -22,14 +19,8 @@ const MIGRATION_FILES: &[(&str, &str)] = &[
         "003_toolbox_seed",
         include_str!("migrations/003_toolbox_seed.sql"),
     ),
-    (
-        "004_jsa",
-        include_str!("migrations/004_jsa.sql"),
-    ),
-    (
-        "005_jsa_seed",
-        include_str!("migrations/005_jsa_seed.sql"),
-    ),
+    ("004_jsa", include_str!("migrations/004_jsa.sql")),
+    ("005_jsa_seed", include_str!("migrations/005_jsa_seed.sql")),
     (
         "006_inspections",
         include_str!("migrations/006_inspections.sql"),
@@ -42,10 +33,7 @@ const MIGRATION_FILES: &[(&str, &str)] = &[
         "008_near_miss",
         include_str!("migrations/008_near_miss.sql"),
     ),
-    (
-        "009_training",
-        include_str!("migrations/009_training.sql"),
-    ),
+    ("009_training", include_str!("migrations/009_training.sql")),
     (
         "010_training_seed",
         include_str!("migrations/010_training_seed.sql"),
@@ -69,17 +57,17 @@ const MIGRATION_FILES: &[(&str, &str)] = &[
 ];
 
 pub fn open_db(db_path: &Path) -> Result<Connection> {
-    let conn = Connection::open(db_path)
+    let mut conn = Connection::open(db_path)
         .with_context(|| format!("Failed to open database at {}", db_path.display()))?;
 
     conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;")
         .context("Failed to set PRAGMA")?;
 
-    run_migrations(&conn)?;
+    run_migrations(&mut conn)?;
     Ok(conn)
 }
 
-fn run_migrations(conn: &Connection) -> Result<()> {
+fn run_migrations(conn: &mut Connection) -> Result<()> {
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS _migrations (
             name TEXT PRIMARY KEY,
@@ -98,11 +86,18 @@ fn run_migrations(conn: &Connection) -> Result<()> {
             .context("Failed to check migration status")?;
 
         if !already_applied {
-            conn.execute_batch(sql)
+            let tx = conn
+                .transaction()
+                .with_context(|| format!("Failed to open transaction for migration: {name}"))?;
+
+            tx.execute_batch(sql)
                 .with_context(|| format!("Failed to run migration: {name}"))?;
 
-            conn.execute("INSERT INTO _migrations (name) VALUES (?1)", [name])
+            tx.execute("INSERT INTO _migrations (name) VALUES (?1)", [name])
                 .with_context(|| format!("Failed to record migration: {name}"))?;
+
+            tx.commit()
+                .with_context(|| format!("Failed to commit migration transaction: {name}"))?;
         }
     }
 
