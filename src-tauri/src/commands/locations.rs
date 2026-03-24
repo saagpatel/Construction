@@ -19,10 +19,7 @@ pub fn create_establishment(
 }
 
 #[tauri::command]
-pub fn get_establishment(
-    db: State<'_, DbState>,
-    id: i64,
-) -> Result<Establishment, AppError> {
+pub fn get_establishment(db: State<'_, DbState>, id: i64) -> Result<Establishment, AppError> {
     let conn = db.lock().map_err(|e| AppError::Internal(e.to_string()))?;
     locations::get_establishment(&conn, id).map_err(|e| AppError::Internal(e.to_string()))
 }
@@ -50,10 +47,7 @@ pub fn delete_establishment(db: State<'_, DbState>, id: i64) -> Result<(), AppEr
 }
 
 #[tauri::command]
-pub fn create_location(
-    db: State<'_, DbState>,
-    data: CreateLocation,
-) -> Result<Location, AppError> {
+pub fn create_location(db: State<'_, DbState>, data: CreateLocation) -> Result<Location, AppError> {
     let conn = db.lock().map_err(|e| AppError::Internal(e.to_string()))?;
     locations::create_location(&conn, data).map_err(|e| AppError::Internal(e.to_string()))
 }
@@ -70,7 +64,8 @@ pub fn list_locations(
     establishment_id: i64,
 ) -> Result<Vec<Location>, AppError> {
     let conn = db.lock().map_err(|e| AppError::Internal(e.to_string()))?;
-    locations::list_locations(&conn, establishment_id).map_err(|e| AppError::Internal(e.to_string()))
+    locations::list_locations(&conn, establishment_id)
+        .map_err(|e| AppError::Internal(e.to_string()))
 }
 
 #[tauri::command]

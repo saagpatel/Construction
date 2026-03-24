@@ -48,7 +48,7 @@ pub fn update_jsa_status(
     id: i64,
     status: String,
 ) -> Result<JsaInstance, AppError> {
-    let valid_statuses = vec!["draft", "reviewed", "approved", "in_progress", "completed"];
+    let valid_statuses = ["draft", "reviewed", "approved", "in_progress", "completed"];
     if !valid_statuses.contains(&status.as_str()) {
         return Err(AppError::Validation(format!(
             "Invalid status: {}. Must be one of: {}",

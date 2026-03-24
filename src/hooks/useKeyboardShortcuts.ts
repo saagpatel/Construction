@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import type { NavigateFunction } from 'react-router-dom';
+import { useEffect } from "react";
+import type { NavigateFunction } from "react-router-dom";
 
 interface KeyboardShortcut {
   key: string;
@@ -14,9 +14,13 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       for (const shortcut of shortcuts) {
-        const metaMatch = shortcut.metaKey === undefined || shortcut.metaKey === event.metaKey;
-        const ctrlMatch = shortcut.ctrlKey === undefined || shortcut.ctrlKey === event.ctrlKey;
-        const shiftMatch = shortcut.shiftKey === undefined || shortcut.shiftKey === event.shiftKey;
+        const metaMatch =
+          shortcut.metaKey === undefined || shortcut.metaKey === event.metaKey;
+        const ctrlMatch =
+          shortcut.ctrlKey === undefined || shortcut.ctrlKey === event.ctrlKey;
+        const shiftMatch =
+          shortcut.shiftKey === undefined ||
+          shortcut.shiftKey === event.shiftKey;
         const keyMatch = event.key.toLowerCase() === shortcut.key.toLowerCase();
 
         if (metaMatch && ctrlMatch && shiftMatch && keyMatch) {
@@ -27,46 +31,50 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [shortcuts]);
 }
 
 // Global shortcuts factory - requires navigate function from useNavigate()
-export function createGlobalShortcuts(navigate: NavigateFunction): KeyboardShortcut[] {
+export function createGlobalShortcuts(
+  navigate: NavigateFunction,
+): KeyboardShortcut[] {
   return [
     {
-      key: 'n',
+      key: "n",
       metaKey: true,
-      action: () => navigate('/incidents/new'),
-      description: 'New Incident',
+      action: () => navigate("/incidents/new"),
+      description: "New Incident",
     },
     {
-      key: 'k',
+      key: "k",
       metaKey: true,
       action: () => {
-        const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement;
+        const searchInput = document.querySelector(
+          'input[type="search"], input[placeholder*="Search"]',
+        ) as HTMLInputElement | null;
         searchInput?.focus();
       },
-      description: 'Focus Search',
+      description: "Focus Search",
     },
     {
-      key: 'd',
+      key: "d",
       metaKey: true,
-      action: () => navigate('/dashboard'),
-      description: 'Go to Dashboard',
+      action: () => navigate("/dashboard"),
+      description: "Go to Dashboard",
     },
     {
-      key: 'i',
+      key: "i",
       metaKey: true,
-      action: () => navigate('/incidents'),
-      description: 'Go to Incidents',
+      action: () => navigate("/incidents"),
+      description: "Go to Incidents",
     },
     {
-      key: 'o',
+      key: "o",
       metaKey: true,
-      action: () => navigate('/osha'),
-      description: 'Go to OSHA Forms',
+      action: () => navigate("/osha"),
+      description: "Go to OSHA Forms",
     },
   ];
 }
