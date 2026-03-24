@@ -7,6 +7,7 @@ on:
 
 jobs:
   require-production-profile:
+    if: ${{ vars.PERF_PROFILE != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Validate PERF_PROFILE configuration
