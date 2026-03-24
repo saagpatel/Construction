@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LaneHandoff",
+  "type": "object",
+  "required": [
+    "lane",
+    "phase",
+    "summary",
+    "artifacts",
+    "verification",
+    "risks",
+    "next_owner"
+  ],
+  "properties": {
+    "lane": {
+      "type": "string",
+      "enum": ["planner", "builder", "qa", "release", "docs_comms"]
+    },
+    "phase": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": ["status", "checks"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["pass", "fail", "not_run"]
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_owner": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
