@@ -15,10 +15,48 @@ jobs:
       - uses: tj-actions/changed-files@48d8f15b2aaa3d255ca5af3eba4870f807ce6b3c
         id: changed
       - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
-        if: contains(steps.changed.outputs.all_changed_files, 'pnpm-lock.yaml') || contains(steps.changed.outputs.all_changed_files, 'package-lock.json') || contains(steps.changed.outputs.all_changed_files, 'yarn.lock')
+        if: contains(steps.changed.outputs.all_changed_files, 'pnpm-lock.yaml') || contains(steps.changed.outputs.all_changed_files, 'package-lock.json') || contains(steps.changed.outputs.all_changed_files, 'yarn.lock') || contains(steps.changed.outputs.all_changed_files, '.perf-baselines/')
         with:
           script: |
             const body = (context.payload.pull_request?.body || "");
-            if (!/## Lockfile rationale/i.test(body)) {
-              core.setFailed("Lockfile changed but PR body lacks 'Lockfile rationale' section.");
+            const changedFiles = `${{ steps.changed.outputs.all_changed_files }}`.split(/\s+/).filter(Boolean);
+            const lockfileChanged = changedFiles.some((file) => /(^|\/)(pnpm-lock\.yaml|package-lock\.json|yarn\.lock)$/.test(file));
+            const perfBaselineChanged = changedFiles.some((file) => file.startsWith(".perf-baselines/"));
+
+            if (lockfileChanged) {
+              const lockfileSection = body.match(/##\s*Lockfile rationale[\s\S]*?(?=\n##\s|\s*$)/i);
+              if (!lockfileSection) {
+                core.setFailed("Lockfile changed but PR body lacks 'Lockfile rationale' section.");
+                return;
+              }
+
+              const meaningfulText = lockfileSection[0]
+                .replace(/##\s*Lockfile rationale/i, "")
+                .replace(/[-*]\s*/g, "")
+                .trim();
+              if (!meaningfulText) {
+                core.setFailed("Lockfile changed but 'Lockfile rationale' section is empty.");
+                return;
+              }
+            }
+
+            if (perfBaselineChanged) {
+              const baselineSection = body.match(/##\s*Baseline governance[\s\S]*?(?=\n##\s|\s*$)/i);
+              if (!baselineSection) {
+                core.setFailed(".perf-baselines changed but PR body lacks 'Baseline governance' section.");
+                return;
+              }
+
+              const requiredFields = [
+                /perf-baseline-update\s*`?\s*label applied\s*:/i,
+                /reviewer signoff\s*:/i,
+                /rollback note\s*:/i,
+              ];
+
+              for (const field of requiredFields) {
+                if (!field.test(baselineSection[0])) {
+                  core.setFailed(".perf-baselines changed but baseline governance details are incomplete.");
+                  return;
+                }
+              }
             }
