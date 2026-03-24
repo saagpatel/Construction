@@ -7,7 +7,12 @@ const files = {
   api: ".perf-results/api-summary.json",
 };
 
-const summary = { capturedAt: new Date().toISOString(), metrics: {}, status: "pass" };
+const requiredMetrics = ["bundle", "build", "memory"];
+const summary = {
+  capturedAt: new Date().toISOString(),
+  metrics: {},
+  status: "pass",
+};
 for (const [key, file] of Object.entries(files)) {
   if (existsSync(file)) {
     summary.metrics[key] = JSON.parse(readFileSync(file, "utf8"));
@@ -16,6 +21,25 @@ for (const [key, file] of Object.entries(files)) {
   }
 }
 
+const missingRequired = requiredMetrics.filter(
+  (metric) => summary.metrics[metric]?.status === "not-run",
+);
+if (missingRequired.length > 0) {
+  summary.status = "not-run";
+}
+
+const failedMetric = Object.values(summary.metrics).some((metric) => {
+  const status =
+    typeof metric?.status === "string" ? metric.status.toLowerCase() : "";
+  return status === "fail" || status === "failed" || status === "error";
+});
+if (failedMetric) {
+  summary.status = "fail";
+}
+
 mkdirSync(".perf-results", { recursive: true });
-writeFileSync(".perf-results/summary.json", `${JSON.stringify(summary, null, 2)}\n`);
+writeFileSync(
+  ".perf-results/summary.json",
+  `${JSON.stringify(summary, null, 2)}\n`,
+);
 console.log("wrote .perf-results/summary.json");

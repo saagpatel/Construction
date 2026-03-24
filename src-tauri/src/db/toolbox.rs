@@ -169,10 +169,15 @@ pub fn list_talks(conn: &Connection, establishment_id: i64) -> Result<Vec<Toolbo
 }
 
 pub fn complete_talk(conn: &Connection, talk_id: i64) -> Result<ToolboxTalk> {
-    conn.execute(
+    let updated = conn.execute(
         "UPDATE toolbox_talks SET status = 'completed' WHERE id = ?",
         [talk_id],
     )?;
+
+    if updated == 0 {
+        return Err(rusqlite::Error::QueryReturnedNoRows);
+    }
+
     get_talk(conn, talk_id)
 }
 
@@ -238,6 +243,103 @@ pub fn sign_attendee(conn: &Connection, data: SignAttendee) -> Result<ToolboxTal
 }
 
 pub fn delete_attendee(conn: &Connection, id: i64) -> Result<()> {
-    conn.execute("DELETE FROM toolbox_talk_attendees WHERE id = ?", [id])?;
+    let deleted = conn.execute("DELETE FROM toolbox_talk_attendees WHERE id = ?", [id])?;
+    if deleted == 0 {
+        return Err(rusqlite::Error::QueryReturnedNoRows);
+    }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::locations::{create_establishment, CreateEstablishment};
+    use crate::db::open_test_db;
+
+    fn create_test_establishment(conn: &Connection) -> i64 {
+        create_establishment(
+            conn,
+            CreateEstablishment {
+                name: "Acme Construction".to_string(),
+                street_address: None,
+                city: None,
+                state: None,
+                zip_code: None,
+                industry_description: Some("Construction".to_string()),
+                naics_code: Some("236220".to_string()),
+            },
+        )
+        .expect("failed to create test establishment")
+        .id
+    }
+
+    #[test]
+    fn test_toolbox_talk_attendee_signature_flow() {
+        let conn = open_test_db();
+        let establishment_id = create_test_establishment(&conn);
+
+        let talk = create_talk(
+            &conn,
+            CreateToolboxTalk {
+                topic_id: None,
+                establishment_id,
+                location_id: None,
+                title: "Ladder Safety Briefing".to_string(),
+                date: "2026-03-01".to_string(),
+                conducted_by: "Site Supervisor".to_string(),
+                notes: Some("Weekly toolbox safety session".to_string()),
+            },
+        )
+        .expect("failed to create toolbox talk");
+        assert_eq!(talk.status, "scheduled");
+
+        let attendee = add_attendee(
+            &conn,
+            AddAttendee {
+                talk_id: talk.id,
+                employee_name: "Jamie Carter".to_string(),
+                employee_id: None,
+            },
+        )
+        .expect("failed to add attendee");
+        assert!(attendee.signature_data.is_none());
+
+        let signed = sign_attendee(
+            &conn,
+            SignAttendee {
+                attendee_id: attendee.id,
+                signature_data: "data:image/png;base64,signature".to_string(),
+            },
+        )
+        .expect("failed to sign attendee");
+        assert!(signed.signature_data.is_some());
+        assert!(signed.signed_at.is_some());
+
+        let attendees = list_attendees(&conn, talk.id).expect("failed to list attendees");
+        assert_eq!(attendees.len(), 1);
+        assert!(attendees[0].signature_data.is_some());
+
+        let completed = complete_talk(&conn, talk.id).expect("failed to complete talk");
+        assert_eq!(completed.status, "completed");
+
+        delete_attendee(&conn, attendee.id).expect("failed to delete attendee");
+        let attendees_after_delete =
+            list_attendees(&conn, talk.id).expect("failed to list attendees after delete");
+        assert!(attendees_after_delete.is_empty());
+    }
+
+    #[test]
+    fn test_toolbox_topics_seeded_and_active_filtering() {
+        let conn = open_test_db();
+        let active_topics = list_topics(&conn, false).expect("failed to list active topics");
+        assert!(!active_topics.is_empty());
+        assert!(active_topics.iter().all(|topic| topic.is_active));
+    }
+
+    #[test]
+    fn test_delete_attendee_returns_not_found_for_missing_id() {
+        let conn = open_test_db();
+        let err = delete_attendee(&conn, 999_999).expect_err("expected missing attendee error");
+        assert!(matches!(err, rusqlite::Error::QueryReturnedNoRows));
+    }
 }

@@ -6,8 +6,19 @@ on:
     branches: [main, master]
 
 jobs:
+  require-production-profile:
+    if: ${{ vars.PERF_PROFILE != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PERF_PROFILE configuration
+        run: |
+          if [ "${{ vars.PERF_PROFILE }}" != "production" ]; then
+            echo "PERF_PROFILE must be set to 'production' for perf-enforced workflow."
+            exit 1
+          fi
+
   perf-bundle:
-    if: ${{ vars.PERF_PROFILE == 'production' }}
+    needs: require-production-profile
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,12 +32,12 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build || pnpm build:ui
+      - run: pnpm build
       - run: pnpm perf:bundle
       - run: node scripts/perf/compare-metric.mjs .perf-baselines/bundle.json .perf-results/bundle.json totalBytes 0.08
 
   perf-build:
-    if: ${{ vars.PERF_PROFILE == 'production' }}
+    needs: require-production-profile
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -44,7 +55,7 @@ jobs:
       - run: node scripts/perf/compare-metric.mjs .perf-baselines/build-time.json .perf-results/build-time.json buildMs 0.15
 
   perf-assets:
-    if: ${{ vars.PERF_PROFILE == 'production' }}
+    needs: require-production-profile
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -53,7 +64,7 @@ jobs:
       - run: ASSET_MAX_BYTES=250000 bash scripts/perf/check-assets.sh
 
   perf-memory:
-    if: ${{ vars.PERF_PROFILE == 'production' }}
+    needs: require-production-profile
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -70,7 +81,7 @@ jobs:
       - run: MEMORY_MAX_DELTA_MB=5 pnpm perf:memory
 
   perf-lighthouse:
-    if: ${{ vars.PERF_PROFILE == 'production' }}
+    needs: require-production-profile
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -88,6 +99,7 @@ jobs:
       - run: pnpm perf:lhci:prod || pnpm perf:lhci
 
   perf-api:
+    needs: require-production-profile
     if: ${{ vars.PERF_PROFILE == 'production' && vars.PERF_BASE_URL != '' }}
     runs-on: ubuntu-latest
     permissions:
@@ -102,6 +114,7 @@ jobs:
           API_P99_MS: "700"
 
   perf-db:
+    needs: require-production-profile
     if: ${{ vars.PERF_PROFILE == 'production' && vars.PERF_DATABASE_URL != '' }}
     runs-on: ubuntu-latest
     permissions:

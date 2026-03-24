@@ -195,7 +195,13 @@ pub fn get_osha_300a_summary(
 
     // Get establishment info
     let (est_name, street, city, state, zip, industry, naics): (
-        String, String, String, String, String, String, String,
+        String,
+        String,
+        String,
+        String,
+        String,
+        String,
+        String,
     ) = conn
         .query_row(
             "SELECT name, COALESCE(street_address,''), COALESCE(city,''),
@@ -205,8 +211,13 @@ pub fn get_osha_300a_summary(
             [establishment_id],
             |row| {
                 Ok((
-                    row.get(0)?, row.get(1)?, row.get(2)?,
-                    row.get(3)?, row.get(4)?, row.get(5)?, row.get(6)?,
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                    row.get(5)?,
+                    row.get(6)?,
                 ))
             },
         )
@@ -235,7 +246,7 @@ pub fn get_osha_300a_summary(
 
     let (injuries, skin, resp, poison, hearing, other_ill): (i64, i64, i64, i64, i64, i64) = conn
         .query_row(
-            "SELECT
+        "SELECT
                 COALESCE(SUM(CASE WHEN injury_illness_type = 'injury' THEN 1 ELSE 0 END), 0),
                 COALESCE(SUM(CASE WHEN injury_illness_type = 'skin_disorder' THEN 1 ELSE 0 END), 0),
                 COALESCE(SUM(CASE WHEN injury_illness_type = 'respiratory' THEN 1 ELSE 0 END), 0),
@@ -244,9 +255,18 @@ pub fn get_osha_300a_summary(
                 COALESCE(SUM(CASE WHEN injury_illness_type = 'other_illness' THEN 1 ELSE 0 END), 0)
              FROM incidents
              WHERE establishment_id = ?1 AND incident_date LIKE ?2 AND is_recordable = 1",
-            params![establishment_id, year_str],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?)),
-        )?;
+        params![establishment_id, year_str],
+        |row| {
+            Ok((
+                row.get(0)?,
+                row.get(1)?,
+                row.get(2)?,
+                row.get(3)?,
+                row.get(4)?,
+                row.get(5)?,
+            ))
+        },
+    )?;
 
     // Get annual stats
     let stats: Option<AnnualStats> = conn
@@ -410,7 +430,7 @@ pub fn upsert_annual_stats(conn: &Connection, data: UpsertAnnualStats) -> Result
             })
         },
     )
-    .map_err(|e| anyhow::Error::new(e))
+    .map_err(anyhow::Error::new)
 }
 
 pub fn get_annual_stats(
@@ -446,42 +466,77 @@ pub fn get_annual_stats(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db::incidents::{create_incident, CreateIncident};
+    use crate::db::locations::{
+        create_establishment, create_location, CreateEstablishment, CreateLocation,
+    };
     use crate::db::open_test_db;
-    use crate::db::incidents::{CreateIncident, create_incident};
-    use crate::db::locations::{CreateEstablishment, CreateLocation, create_establishment, create_location};
 
     fn setup(conn: &Connection) -> (i64, i64) {
-        let est = create_establishment(conn, CreateEstablishment {
-            name: "ABC Construction".into(),
-            street_address: Some("100 Main St".into()),
-            city: Some("Chicago".into()),
-            state: Some("IL".into()),
-            zip_code: Some("60601".into()),
-            industry_description: Some("General Construction".into()),
-            naics_code: Some("236220".into()),
-        }).unwrap();
-        let loc = create_location(conn, CreateLocation {
-            establishment_id: est.id, name: "Site A".into(),
-            address: None, city: None, state: None,
-        }).unwrap();
+        let est = create_establishment(
+            conn,
+            CreateEstablishment {
+                name: "ABC Construction".into(),
+                street_address: Some("100 Main St".into()),
+                city: Some("Chicago".into()),
+                state: Some("IL".into()),
+                zip_code: Some("60601".into()),
+                industry_description: Some("General Construction".into()),
+                naics_code: Some("236220".into()),
+            },
+        )
+        .unwrap();
+        let loc = create_location(
+            conn,
+            CreateLocation {
+                establishment_id: est.id,
+                name: "Site A".into(),
+                address: None,
+                city: None,
+                state: None,
+            },
+        )
+        .unwrap();
 
-        let inc = create_incident(conn, CreateIncident {
-            establishment_id: est.id, location_id: Some(loc.id),
-            employee_name: "John Doe".into(), incident_date: "2026-03-15".into(),
-            description: "Fell from ladder".into(),
-            employee_job_title: Some("Laborer".into()),
-            outcome_severity: Some("days_away".into()),
-            days_away_count: Some(10), days_restricted_count: Some(5),
-            injury_illness_type: Some("injury".into()), is_recordable: Some(true),
-            employee_address: None, employee_city: None, employee_state: None,
-            employee_zip: None, employee_dob: None, employee_hire_date: None,
-            employee_gender: None, is_privacy_case: None, incident_time: None,
-            work_start_time: None, where_occurred: Some("Building A".into()),
-            activity_before_incident: None, how_injury_occurred: None,
-            injury_description: None, object_substance: None, physician_name: None,
-            treatment_facility: None, facility_address: None, facility_city_state_zip: None,
-            treated_in_er: None, hospitalized_overnight: None, date_of_death: None,
-        }).unwrap();
+        let inc = create_incident(
+            conn,
+            CreateIncident {
+                establishment_id: est.id,
+                location_id: Some(loc.id),
+                employee_name: "John Doe".into(),
+                incident_date: "2026-03-15".into(),
+                description: "Fell from ladder".into(),
+                employee_job_title: Some("Laborer".into()),
+                outcome_severity: Some("days_away".into()),
+                days_away_count: Some(10),
+                days_restricted_count: Some(5),
+                injury_illness_type: Some("injury".into()),
+                is_recordable: Some(true),
+                employee_address: None,
+                employee_city: None,
+                employee_state: None,
+                employee_zip: None,
+                employee_dob: None,
+                employee_hire_date: None,
+                employee_gender: None,
+                is_privacy_case: None,
+                incident_time: None,
+                work_start_time: None,
+                where_occurred: Some("Building A".into()),
+                activity_before_incident: None,
+                how_injury_occurred: None,
+                injury_description: None,
+                object_substance: None,
+                physician_name: None,
+                treatment_facility: None,
+                facility_address: None,
+                facility_city_state_zip: None,
+                treated_in_er: None,
+                hospitalized_overnight: None,
+                date_of_death: None,
+            },
+        )
+        .unwrap();
 
         (est.id, inc.id)
     }
@@ -503,13 +558,20 @@ mod tests {
         let conn = open_test_db();
         let (est_id, _) = setup(&conn);
 
-        upsert_annual_stats(&conn, UpsertAnnualStats {
-            establishment_id: est_id, year: 2026,
-            avg_employees: 50, total_hours_worked: 100000,
-            certifier_name: Some("Jane Smith".into()),
-            certifier_title: Some("Safety Director".into()),
-            certifier_phone: None, certification_date: None,
-        }).unwrap();
+        upsert_annual_stats(
+            &conn,
+            UpsertAnnualStats {
+                establishment_id: est_id,
+                year: 2026,
+                avg_employees: 50,
+                total_hours_worked: 100000,
+                certifier_name: Some("Jane Smith".into()),
+                certifier_title: Some("Safety Director".into()),
+                certifier_phone: None,
+                certification_date: None,
+            },
+        )
+        .unwrap();
 
         let summary = get_osha_300a_summary(&conn, est_id, 2026).unwrap();
         assert_eq!(summary.total_days_away_cases, 1);

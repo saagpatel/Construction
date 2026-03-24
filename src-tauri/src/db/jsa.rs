@@ -150,7 +150,11 @@ pub fn add_step(conn: &Connection, data: AddJsaStep) -> Result<JsaStep> {
     conn.execute(
         "INSERT INTO jsa_steps (jsa_instance_id, step_number, task_description)
          VALUES (?, ?, ?)",
-        params![data.jsa_instance_id, data.step_number, data.task_description],
+        params![
+            data.jsa_instance_id,
+            data.step_number,
+            data.task_description
+        ],
     )?;
 
     let id = conn.last_insert_rowid();

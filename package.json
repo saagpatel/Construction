@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:ui": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "check:frontend": "pnpm typecheck && vite build",
+    "check:quality": "pnpm check:frontend && pnpm lint:rust && pnpm test:rust",
     "preview": "vite preview",
     "tauri": "tauri",
     "dev:normal": "tauri dev",
@@ -30,7 +34,13 @@
     "perf:build": "node scripts/perf/measure-build-time.mjs",
     "perf:assets": "bash scripts/perf/check-assets.sh",
     "perf:memory": "node --expose-gc scripts/perf/memory-smoke.mjs",
+    "perf:lhci": "lhci autorun --config=lighthouserc.json",
+    "perf:lhci:prod": "lhci autorun --config=.lighthouserc.production.json",
     "perf:summary": "node scripts/perf/summarize.mjs",
+    "check:rust:fmt": "cd src-tauri && cargo fmt --all -- --check",
+    "lint:rust": "cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings",
+    "test:rust": "cd src-tauri && cargo test",
+    "verify": "bash .codex/scripts/run_verify_commands.sh",
     "lint-staged": "lint-staged"
   },
   "dependencies": {

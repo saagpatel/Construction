@@ -204,7 +204,12 @@ pub fn add_five_whys_step(conn: &Connection, data: CreateFiveWhysStep) -> Result
     conn.execute(
         "INSERT INTO five_whys_steps (rca_session_id, step_number, question, answer)
          VALUES (?1, ?2, ?3, ?4)",
-        params![data.rca_session_id, data.step_number, data.question, data.answer],
+        params![
+            data.rca_session_id,
+            data.step_number,
+            data.question,
+            data.answer
+        ],
     )
     .context("Failed to add 5 Whys step")?;
 
@@ -222,7 +227,7 @@ pub fn add_five_whys_step(conn: &Connection, data: CreateFiveWhysStep) -> Result
             })
         },
     )
-    .map_err(|e| anyhow::Error::new(e))
+    .map_err(anyhow::Error::new)
 }
 
 pub fn list_five_whys_steps(conn: &Connection, rca_session_id: i64) -> Result<Vec<FiveWhysStep>> {
@@ -276,7 +281,7 @@ pub fn update_five_whys_step(
             })
         },
     )
-    .map_err(|e| anyhow::Error::new(e))
+    .map_err(anyhow::Error::new)
 }
 
 // ── Fishbone ──
@@ -288,7 +293,11 @@ pub fn add_fishbone_category(
     conn.execute(
         "INSERT INTO fishbone_categories (rca_session_id, category, sort_order)
          VALUES (?1, ?2, ?3)",
-        params![data.rca_session_id, data.category, data.sort_order.unwrap_or(0)],
+        params![
+            data.rca_session_id,
+            data.category,
+            data.sort_order.unwrap_or(0)
+        ],
     )
     .context("Failed to add fishbone category")?;
 
@@ -576,44 +585,76 @@ pub fn delete_corrective_action(conn: &Connection, id: i64) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db::incidents::{create_incident, CreateIncident};
+    use crate::db::locations::{
+        create_establishment, create_location, CreateEstablishment, CreateLocation,
+    };
     use crate::db::open_test_db;
-    use crate::db::incidents::{CreateIncident, create_incident};
-    use crate::db::locations::{CreateEstablishment, CreateLocation, create_establishment, create_location};
 
     fn setup(conn: &Connection) -> i64 {
         let est = create_establishment(
             conn,
             CreateEstablishment {
                 name: "Test Co".into(),
-                street_address: None, city: None, state: None,
-                zip_code: None, industry_description: None, naics_code: None,
+                street_address: None,
+                city: None,
+                state: None,
+                zip_code: None,
+                industry_description: None,
+                naics_code: None,
             },
-        ).unwrap();
+        )
+        .unwrap();
         let loc = create_location(
             conn,
             CreateLocation {
-                establishment_id: est.id, name: "Site".into(),
-                address: None, city: None, state: None,
+                establishment_id: est.id,
+                name: "Site".into(),
+                address: None,
+                city: None,
+                state: None,
             },
-        ).unwrap();
+        )
+        .unwrap();
         let inc = create_incident(
             conn,
             CreateIncident {
-                establishment_id: est.id, location_id: Some(loc.id),
-                employee_name: "Jane".into(), incident_date: "2026-01-01".into(),
+                establishment_id: est.id,
+                location_id: Some(loc.id),
+                employee_name: "Jane".into(),
+                incident_date: "2026-01-01".into(),
                 description: "Test".into(),
-                employee_job_title: None, employee_address: None, employee_city: None,
-                employee_state: None, employee_zip: None, employee_dob: None,
-                employee_hire_date: None, employee_gender: None, is_privacy_case: None,
-                incident_time: None, work_start_time: None, where_occurred: None,
-                activity_before_incident: None, how_injury_occurred: None,
-                injury_description: None, object_substance: None, physician_name: None,
-                treatment_facility: None, facility_address: None, facility_city_state_zip: None,
-                treated_in_er: None, hospitalized_overnight: None, outcome_severity: None,
-                days_away_count: None, days_restricted_count: None, date_of_death: None,
-                injury_illness_type: None, is_recordable: None,
+                employee_job_title: None,
+                employee_address: None,
+                employee_city: None,
+                employee_state: None,
+                employee_zip: None,
+                employee_dob: None,
+                employee_hire_date: None,
+                employee_gender: None,
+                is_privacy_case: None,
+                incident_time: None,
+                work_start_time: None,
+                where_occurred: None,
+                activity_before_incident: None,
+                how_injury_occurred: None,
+                injury_description: None,
+                object_substance: None,
+                physician_name: None,
+                treatment_facility: None,
+                facility_address: None,
+                facility_city_state_zip: None,
+                treated_in_er: None,
+                hospitalized_overnight: None,
+                outcome_severity: None,
+                days_away_count: None,
+                days_restricted_count: None,
+                date_of_death: None,
+                injury_illness_type: None,
+                is_recordable: None,
             },
-        ).unwrap();
+        )
+        .unwrap();
         inc.id
     }
 
@@ -622,21 +663,32 @@ mod tests {
         let conn = open_test_db();
         let inc_id = setup(&conn);
 
-        let session = create_rca_session(&conn, CreateRcaSession {
-            incident_id: inc_id, method: "five_whys".into(),
-        }).unwrap();
+        let session = create_rca_session(
+            &conn,
+            CreateRcaSession {
+                incident_id: inc_id,
+                method: "five_whys".into(),
+            },
+        )
+        .unwrap();
         assert_eq!(session.status, "in_progress");
 
-        add_five_whys_step(&conn, CreateFiveWhysStep {
-            rca_session_id: session.id, step_number: 1,
-            question: "Why did the worker fall?".into(),
-            answer: "The scaffold was not secured".into(),
-        }).unwrap();
+        add_five_whys_step(
+            &conn,
+            CreateFiveWhysStep {
+                rca_session_id: session.id,
+                step_number: 1,
+                question: "Why did the worker fall?".into(),
+                answer: "The scaffold was not secured".into(),
+            },
+        )
+        .unwrap();
 
         let steps = list_five_whys_steps(&conn, session.id).unwrap();
         assert_eq!(steps.len(), 1);
 
-        let completed = complete_rca_session(&conn, session.id, "Inadequate scaffold inspection").unwrap();
+        let completed =
+            complete_rca_session(&conn, session.id, "Inadequate scaffold inspection").unwrap();
         assert_eq!(completed.status, "completed");
     }
 
@@ -645,19 +697,32 @@ mod tests {
         let conn = open_test_db();
         let inc_id = setup(&conn);
 
-        let action = create_corrective_action(&conn, CreateCorrectiveAction {
-            incident_id: inc_id, rca_session_id: None,
-            description: "Implement scaffold checklist".into(),
-            assigned_to: Some("Safety Manager".into()),
-            due_date: Some("2026-02-01".into()),
-        }).unwrap();
+        let action = create_corrective_action(
+            &conn,
+            CreateCorrectiveAction {
+                incident_id: inc_id,
+                rca_session_id: None,
+                description: "Implement scaffold checklist".into(),
+                assigned_to: Some("Safety Manager".into()),
+                due_date: Some("2026-02-01".into()),
+            },
+        )
+        .unwrap();
         assert_eq!(action.status, "open");
 
-        let updated = update_corrective_action(&conn, action.id, UpdateCorrectiveAction {
-            status: Some("completed".into()),
-            completed_date: Some("2026-01-25".into()),
-            description: None, assigned_to: None, due_date: None, notes: None,
-        }).unwrap();
+        let updated = update_corrective_action(
+            &conn,
+            action.id,
+            UpdateCorrectiveAction {
+                status: Some("completed".into()),
+                completed_date: Some("2026-01-25".into()),
+                description: None,
+                assigned_to: None,
+                due_date: None,
+                notes: None,
+            },
+        )
+        .unwrap();
         assert_eq!(updated.status, "completed");
 
         let actions = list_corrective_actions(&conn, inc_id).unwrap();

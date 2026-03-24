@@ -60,14 +60,14 @@ pub fn get_dashboard_summary(
         .query_row(
             "SELECT
                 COUNT(*),
-                SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END),
-                SUM(CASE WHEN is_recordable = 1 THEN 1 ELSE 0 END)
+                COALESCE(SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END), 0),
+                COALESCE(SUM(CASE WHEN is_recordable = 1 THEN 1 ELSE 0 END), 0)
              FROM incidents
              WHERE establishment_id = ?1 AND incident_date LIKE ?2",
             params![establishment_id, year_str],
             |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
         )
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     let days_since: Option<i64> = conn
         .query_row(
@@ -116,7 +116,7 @@ pub fn get_incidents_by_month(
              WHERE establishment_id = ?1 AND incident_date LIKE ?2
              GROUP BY month ORDER BY month",
         )
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     let rows = stmt
         .query_map(params![establishment_id, year_str], |row| {
@@ -125,9 +125,9 @@ pub fn get_incidents_by_month(
                 count: row.get(1)?,
             })
         })
-        .map_err(|e| AppError::Database(e))?
+        .map_err(AppError::Database)?
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     Ok(rows)
 }
@@ -148,7 +148,7 @@ pub fn get_incidents_by_severity(
              WHERE establishment_id = ?1 AND incident_date LIKE ?2 AND is_recordable = 1
              GROUP BY outcome_severity",
         )
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     let rows = stmt
         .query_map(params![establishment_id, year_str], |row| {
@@ -157,9 +157,9 @@ pub fn get_incidents_by_severity(
                 count: row.get(1)?,
             })
         })
-        .map_err(|e| AppError::Database(e))?
+        .map_err(AppError::Database)?
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     Ok(rows)
 }
@@ -181,7 +181,7 @@ pub fn get_incidents_by_location(
              WHERE i.establishment_id = ?1 AND i.incident_date LIKE ?2
              GROUP BY l.name",
         )
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     let rows = stmt
         .query_map(params![establishment_id, year_str], |row| {
@@ -190,9 +190,9 @@ pub fn get_incidents_by_location(
                 count: row.get(1)?,
             })
         })
-        .map_err(|e| AppError::Database(e))?
+        .map_err(AppError::Database)?
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     Ok(rows)
 }
@@ -213,7 +213,7 @@ pub fn get_incidents_by_type(
              WHERE establishment_id = ?1 AND incident_date LIKE ?2 AND is_recordable = 1
              GROUP BY injury_illness_type",
         )
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     let rows = stmt
         .query_map(params![establishment_id, year_str], |row| {
@@ -222,9 +222,9 @@ pub fn get_incidents_by_type(
                 count: row.get(1)?,
             })
         })
-        .map_err(|e| AppError::Database(e))?
+        .map_err(AppError::Database)?
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     Ok(rows)
 }
@@ -249,7 +249,7 @@ pub fn get_corrective_action_summary(
             [establishment_id],
             |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
         )
-        .map_err(|e| AppError::Database(e))?;
+        .map_err(AppError::Database)?;
 
     Ok(CorrectiveActionSummary {
         open,

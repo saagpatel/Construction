@@ -1,5 +1,10 @@
 # codex-os-managed
 pnpm git:guard:all
-pnpm perf:bundle
+pnpm check:frontend
+pnpm lint:rust
+pnpm test:rust
 pnpm perf:build
+pnpm perf:bundle
 pnpm perf:assets
+pnpm perf:memory
+pnpm perf:summary

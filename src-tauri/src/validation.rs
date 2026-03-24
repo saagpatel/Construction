@@ -31,7 +31,7 @@ pub fn validate_days_count(days: i64, field_name: &str) -> Result<(), AppError> 
 
 /// Validates that a year is within reasonable range
 pub fn validate_year(year: i64) -> Result<(), AppError> {
-    if year < MIN_YEAR || year > MAX_YEAR {
+    if !(MIN_YEAR..=MAX_YEAR).contains(&year) {
         return Err(AppError::Validation(format!(
             "Year must be between {} and {} (got: {})",
             MIN_YEAR, MAX_YEAR, year
@@ -76,7 +76,11 @@ pub fn validate_hours_worked(hours: i64) -> Result<(), AppError> {
 }
 
 /// Validates string length
-pub fn validate_string_length(s: &str, max_length: usize, field_name: &str) -> Result<(), AppError> {
+pub fn validate_string_length(
+    s: &str,
+    max_length: usize,
+    field_name: &str,
+) -> Result<(), AppError> {
     if s.len() > max_length {
         return Err(AppError::Validation(format!(
             "{} exceeds maximum length of {} characters (got: {} characters)",
@@ -91,7 +95,10 @@ pub fn validate_string_length(s: &str, max_length: usize, field_name: &str) -> R
 /// Validates that a string is not empty
 pub fn validate_not_empty(s: &str, field_name: &str) -> Result<(), AppError> {
     if s.trim().is_empty() {
-        return Err(AppError::Validation(format!("{} cannot be empty", field_name)));
+        return Err(AppError::Validation(format!(
+            "{} cannot be empty",
+            field_name
+        )));
     }
     Ok(())
 }
@@ -115,9 +122,12 @@ pub fn validate_date_format(date: &str, field_name: &str) -> Result<(), AppError
 
     // Validate year
     let year = parts[0].parse::<i32>().map_err(|_| {
-        AppError::Validation(format!("Invalid year in {} (got: {})", field_name, parts[0]))
+        AppError::Validation(format!(
+            "Invalid year in {} (got: {})",
+            field_name, parts[0]
+        ))
     })?;
-    if year < 1970 || year > 2100 {
+    if !(1970..=2100).contains(&year) {
         return Err(AppError::Validation(format!(
             "Year in {} must be between 1970 and 2100 (got: {})",
             field_name, year
@@ -126,9 +136,12 @@ pub fn validate_date_format(date: &str, field_name: &str) -> Result<(), AppError
 
     // Validate month
     let month = parts[1].parse::<u32>().map_err(|_| {
-        AppError::Validation(format!("Invalid month in {} (got: {})", field_name, parts[1]))
+        AppError::Validation(format!(
+            "Invalid month in {} (got: {})",
+            field_name, parts[1]
+        ))
     })?;
-    if month < 1 || month > 12 {
+    if !(1..=12).contains(&month) {
         return Err(AppError::Validation(format!(
             "Month in {} must be between 01 and 12 (got: {})",
             field_name, parts[1]
@@ -139,7 +152,7 @@ pub fn validate_date_format(date: &str, field_name: &str) -> Result<(), AppError
     let day = parts[2].parse::<u32>().map_err(|_| {
         AppError::Validation(format!("Invalid day in {} (got: {})", field_name, parts[2]))
     })?;
-    if day < 1 || day > 31 {
+    if !(1..=31).contains(&day) {
         return Err(AppError::Validation(format!(
             "Day in {} must be between 01 and 31 (got: {})",
             field_name, parts[2]
@@ -174,7 +187,10 @@ pub fn validate_date_format(date: &str, field_name: &str) -> Result<(), AppError
 pub fn sanitize_filename(name: &str) -> String {
     name.chars()
         .filter(|c| {
-            !matches!(c, '/' | '\\' | '\0' | ':' | '*' | '?' | '"' | '<' | '>' | '|')
+            !matches!(
+                c,
+                '/' | '\\' | '\0' | ':' | '*' | '?' | '"' | '<' | '>' | '|'
+            )
         })
         .take(MAX_NAME_LENGTH)
         .collect::<String>()
@@ -202,8 +218,9 @@ pub fn safe_export_path(base_name: &str, extension: &str) -> Result<PathBuf, App
 
     // Ensure Downloads directory exists
     if !downloads_dir.exists() {
-        std::fs::create_dir_all(&downloads_dir)
-            .map_err(|e| AppError::Internal(format!("Failed to create Downloads directory: {}", e)))?;
+        std::fs::create_dir_all(&downloads_dir).map_err(|e| {
+            AppError::Internal(format!("Failed to create Downloads directory: {}", e))
+        })?;
     }
 
     // Construct final path with sanitized name
@@ -212,10 +229,12 @@ pub fn safe_export_path(base_name: &str, extension: &str) -> Result<PathBuf, App
     path.push(filename);
 
     // Final safety check: ensure resolved path is still within Downloads
-    let canonical_downloads = downloads_dir.canonicalize()
+    let canonical_downloads = downloads_dir
+        .canonicalize()
         .map_err(|e| AppError::Internal(format!("Failed to resolve Downloads path: {}", e)))?;
 
-    let canonical_target = path.parent()
+    let canonical_target = path
+        .parent()
         .ok_or_else(|| AppError::Internal("Invalid path".to_string()))?
         .canonicalize()
         .map_err(|e| AppError::Internal(format!("Failed to resolve target path: {}", e)))?;
