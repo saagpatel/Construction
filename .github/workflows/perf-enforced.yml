@@ -5,6 +5,9 @@ on:
     types: [opened, synchronize, reopened, edited]
     branches: [main, master]
 
+permissions:
+  contents: read
+
 jobs:
   require-production-profile:
     if: ${{ vars.PERF_PROFILE != '' }}
