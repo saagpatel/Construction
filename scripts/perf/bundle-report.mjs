@@ -1,4 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 function nextBundle() {
@@ -29,26 +36,41 @@ function nextBundle() {
 
 function viteBundle() {
   const distAssets = "dist/assets";
-  if (!existsSync(distAssets)) return null;
+  const indexHtml = "dist/index.html";
+  if (!existsSync(distAssets) && !existsSync(indexHtml)) return null;
 
   const result = { source: "vite", totalBytes: 0, assets: {} };
-  for (const file of readdirSync(distAssets)) {
-    const full = path.join(distAssets, file);
+  if (existsSync(indexHtml)) {
     try {
-      const size = statSync(full).size;
-      result.assets[file] = size;
+      const size = statSync(indexHtml).size;
+      result.assets["index.html"] = size;
       result.totalBytes += size;
     } catch {}
+  }
+  if (existsSync(distAssets)) {
+    for (const file of readdirSync(distAssets)) {
+      const full = path.join(distAssets, file);
+      try {
+        const size = statSync(full).size;
+        result.assets[file] = size;
+        result.totalBytes += size;
+      } catch {}
+    }
   }
   return result;
 }
 
 const run = async () => {
-  const report = nextBundle() || (await viteBundle()) || { source: "none", totalBytes: 0 };
+  const report = nextBundle() ||
+    (await viteBundle()) || { source: "none", totalBytes: 0 };
   mkdirSync(".perf-results", { recursive: true });
   writeFileSync(
     ".perf-results/bundle.json",
-    JSON.stringify({ ...report, capturedAt: new Date().toISOString() }, null, 2),
+    JSON.stringify(
+      { ...report, capturedAt: new Date().toISOString() },
+      null,
+      2,
+    ),
   );
 };
 
