@@ -9,34 +9,34 @@ importers:
   .:
     dependencies:
       '@tauri-apps/api':
-        specifier: ^2
+        specifier: ^2.10.1
         version: 2.10.1
       '@tauri-apps/plugin-dialog':
-        specifier: ^2
+        specifier: ^2.6.0
         version: 2.6.0
       '@tauri-apps/plugin-fs':
-        specifier: ^2
+        specifier: ^2.4.5
         version: 2.4.5
       '@tauri-apps/plugin-opener':
-        specifier: ^2
+        specifier: ^2.5.3
         version: 2.5.3
       lucide-react:
         specifier: ^0.563.0
         version: 0.563.0(react@19.2.4)
       react:
-        specifier: ^19.1.0
+        specifier: ^19.2.4
         version: 19.2.4
       react-dom:
-        specifier: ^19.1.0
+        specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
       react-router-dom:
-        specifier: ^7.6.1
+        specifier: ^7.13.0
         version: 7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       recharts:
-        specifier: ^2.15.3
+        specifier: ^2.15.4
         version: 2.15.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       zustand:
-        specifier: ^5.0.5
+        specifier: ^5.0.11
         version: 5.0.11(@types/react@19.2.13)(react@19.2.4)
     devDependencies:
       '@commitlint/cli':
@@ -52,19 +52,19 @@ importers:
         specifier: ^0.15.1
         version: 0.15.1
       '@tailwindcss/vite':
-        specifier: ^4.1.10
+        specifier: ^4.1.18
         version: 4.1.18(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2))
       '@tauri-apps/cli':
-        specifier: ^2
+        specifier: ^2.10.0
         version: 2.10.0
       '@types/react':
-        specifier: ^19.1.8
+        specifier: ^19.2.13
         version: 19.2.13
       '@types/react-dom':
-        specifier: ^19.1.6
+        specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.13)
       '@vitejs/plugin-react':
-        specifier: ^4.6.0
+        specifier: ^4.7.0
         version: 4.7.0(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2))
       commitizen:
         specifier: ^4.3.1
@@ -76,16 +76,16 @@ importers:
         specifier: ^15.5.2
         version: 15.5.2
       prettier:
-        specifier: ^3.6.2
+        specifier: ^3.8.1
         version: 3.8.1
       tailwindcss:
-        specifier: ^4.1.10
+        specifier: ^4.1.18
         version: 4.1.18
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
       vite:
-        specifier: ^7.0.4
+        specifier: ^7.3.1
         version: 7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2)
 
 packages:
@@ -1014,6 +1014,7 @@ packages:
   basic-ftp@5.2.0:
     resolution: {integrity: sha512-VoMINM2rqJwJgfdHq6RiUudKt2BV+FY5ZFezP/ypmwayk68+NzzAQy4XXLlqsGD4MCzq3DrmNFD/uUmBJuGoXw==}
     engines: {node: '>=10.0.0'}
+    deprecated: Security vulnerability fixed in 5.2.1, please upgrade
 
   bl@4.1.0:
     resolution: {integrity: sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w==}
@@ -2338,12 +2339,12 @@ packages:
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
-  picomatch@2.3.1:
-    resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
+  picomatch@2.3.2:
+    resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
 
-  picomatch@4.0.3:
-    resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
+  picomatch@4.0.4:
+    resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
     engines: {node: '>=12'}
 
   pidtree@0.6.0:
@@ -2724,8 +2725,8 @@ packages:
   third-party-web@0.26.7:
     resolution: {integrity: sha512-buUzX4sXC4efFX6xg2bw6/eZsCUh8qQwSavC4D9HpONMFlRbcHhD8Je5qwYdCpViR6q0qla2wPP+t91a2vgolg==}
 
-  third-party-web@0.29.0:
-    resolution: {integrity: sha512-nBDSJw5B7Sl1YfsATG2XkW5qgUPODbJhXw++BKygi9w6O/NKS98/uY/nR/DxDq2axEjL6halHW1v+jhm/j1DBQ==}
+  third-party-web@0.29.2:
+    resolution: {integrity: sha512-fegtha91tq2DHphyoiBXVHjVi2YG9zFaRnboT9C28tO1en9Y3wJsfspuy40F+u5wl3hHVbw7cnd1b67kEGHb8g==}
 
   through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
@@ -2829,6 +2830,7 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   vary@1.1.2:
@@ -3466,7 +3468,7 @@ snapshots:
   '@paulirish/trace_engine@0.0.53':
     dependencies:
       legacy-javascript: 0.0.1
-      third-party-web: 0.29.0
+      third-party-web: 0.29.2
 
   '@puppeteer/browsers@2.13.0':
     dependencies:
@@ -4492,9 +4494,9 @@ snapshots:
     dependencies:
       pend: 1.2.0
 
-  fdir@6.5.0(picomatch@4.0.3):
+  fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
-      picomatch: 4.0.3
+      picomatch: 4.0.4
 
   figures@2.0.0:
     dependencies:
@@ -5084,7 +5086,7 @@ snapshots:
   micromatch@4.0.8:
     dependencies:
       braces: 3.0.3
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   mime-db@1.52.0: {}
 
@@ -5268,9 +5270,9 @@ snapshots:
 
   picocolors@1.1.1: {}
 
-  picomatch@2.3.1: {}
+  picomatch@2.3.2: {}
 
-  picomatch@4.0.3: {}
+  picomatch@4.0.4: {}
 
   pidtree@0.6.0: {}
 
@@ -5726,7 +5728,7 @@ snapshots:
 
   third-party-web@0.26.7: {}
 
-  third-party-web@0.29.0: {}
+  third-party-web@0.29.2: {}
 
   through@2.3.8: {}
 
@@ -5736,8 +5738,8 @@ snapshots:
 
   tinyglobby@0.2.15:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
 
   tldts-core@6.1.86: {}
 
@@ -5828,8 +5830,8 @@ snapshots:
   vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2):
     dependencies:
       esbuild: 0.27.3
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
       postcss: 8.5.6
       rollup: 4.60.0
       tinyglobby: 0.2.15
